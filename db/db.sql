@@ -11,13 +11,13 @@ DROP TABLE IF EXISTS Orders_Products;
 
 CREATE TABLE IF NOT EXISTS Categories(
 	id INT PRIMARY KEY AUTO_INCREMENT,
-    name_category VARCHAR(50) NOT NULL UNIQUE
+    name_category VARCHAR(50)
 );
 
 CREATE TABLE IF NOT EXISTS Products (
 	id INT PRIMARY KEY AUTO_INCREMENT,
     name_product VARCHAR(50) NOT NULL,
-    references_product VARCHAR(10) NOT NULL UNIQUE,
+    references_product VARCHAR(10) NOT NULL,
     stock INT NOT NULL,
     price FLOAT NOT NULL,
     id_category INT NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS Products (
 
 CREATE TABLE IF NOT EXISTS Providers (
 	id INT PRIMARY KEY AUTO_INCREMENT,
-    name_provider VARCHAR(50) NOT NULL UNIQUE
+    name_provider VARCHAR(50) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS Providers_Products (
@@ -41,13 +41,13 @@ CREATE TABLE IF NOT EXISTS Clients (
 	id INT PRIMARY KEY AUTO_INCREMENT,
     firstname VARCHAR(50) NOT NULL,
     lastname VARCHAR(50) NOT NULL,
-    email VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(50) NOT NULL,
     address VARCHAR(50) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS Orders (
 	id INT PRIMARY KEY AUTO_INCREMENT,
-    number_order VARCHAR(10) NOT NULL UNIQUE,
+    number_order VARCHAR(10) NOT NULL,
     date_order DATETIME DEFAULT current_timestamp,
     total_price FLOAT,
     id_client INT NOT NULL,
