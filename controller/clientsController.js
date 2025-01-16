@@ -3,10 +3,10 @@ const ErrorResponseDTO = require("../dto/ErrorReponseDTO")
 const ResponseDTO = require("../dto/ResponseDTO")
 const { getConnectionDb } = require("../utils/db")
 
-exports.getCategories= async (req, res, next) =>{
+exports.getClients= async (req, res, next) =>{
     try {
         const connection = await getConnectionDb()
-        const sql = `SELECT * FROM Categories ORDER BY id`
+        const sql = `SELECT * FROM Clients ORDER BY id`
         const [data] = await connection.query(sql)
         await connection.end()
         res.status(SUCCESS_STATUS).json(new ResponseDTO("Données récupérées", data, SUCCESS_STATUS))
@@ -17,12 +17,12 @@ exports.getCategories= async (req, res, next) =>{
 
 
 
-exports.postCategories= async (req, res, next) =>{
+exports.postClients= async (req, res, next) =>{
     try {
-        const {name_category} = req.body
+        const {firstname, lastname, address , email} = req.body
         const connection = await getConnectionDb()
-        const sqlCategories= `INSERT INTO Categories (name_category) VALUES ('${name_category}')`
-        const data = await connection.query(sqlCategories)
+        const sqlClients= `INSERT INTO Clients (firstname, lastname, address, email) VALUES ('${firstname}', '${lastname}', '${address}', '${email}')`
+        const data = await connection.query(sqlClients)
         await connection.end()
         res.status(SUCCESS_STATUS).json(new ResponseDTO("Donnée insérée", data, SUCCESS_STATUS))
     } catch (error) {
@@ -30,18 +30,18 @@ exports.postCategories= async (req, res, next) =>{
     }
 }
 
-exports.putCategories= async (req, res, next) =>{
+exports.putClients= async (req, res, next) =>{
     try {
-        const {name_category, new_name_category} = req.body
+        const {firstname, lastname, address , email} = req.body
         const connection = await getConnectionDb()
-        const sqlSelectCategories= `SELECT * FROM Categories WHERE name_category='${name_category}'`
-        const [category] = await connection.query(sqlSelectCategories)
+        const sqlSelectClients= `SELECT * FROM Clients WHERE email='${email}'`
+        const [category] = await connection.query(sqlSelectClients)
         if(!category){
             return res.status(NOTFOUND_STATUS).json(new ErrorResponseDTO("La catégorie n'existe pas.", {}, NOTFOUND_STATUS))
         }
         const categoryInfo = category[0]
-        const sqlCategories= `UPDATE Categories SET name_category='${new_name_category}' WHERE id=${categoryInfo.id} `
-        const [result] = await connection.query(sqlCategories)
+        const sqlClients= `UPDATE Clients SET name_category='${new_name_category}' WHERE id=${categoryInfo.id} `
+        const [result] = await connection.query(sqlClients)
         await connection.end()
         res.status(SUCCESS_STATUS).json(new ResponseDTO("Données mis à jour.", result, SUCCESS_STATUS))
     } catch (error) {
@@ -49,16 +49,16 @@ exports.putCategories= async (req, res, next) =>{
     }
 }
 
-exports.deleteCategories= async (req,res, next) => {
+exports.deleteClients= async (req,res, next) => {
     try {
         const {name_category} = req.params
         const connection = await getConnectionDb()
-        const sqlSelectCategories= `SELECT id FROM Categories WHERE name_category='${name_category}'`
-        const [[category]] = await connection.query(sqlSelectCategories)
+        const sqlSelectClients= `SELECT id FROM Clients WHERE name_category='${name_category}'`
+        const [[category]] = await connection.query(sqlSelectClients)
         if(!category){
             return res.status(NOTFOUND_STATUS).json(new ErrorResponseDTO("La catégorie n'existe pas.", {}, NOTFOUND_STATUS))
         }
-        const sql = `DELETE FROM Categories WHERE id=${category.id}`
+        const sql = `DELETE FROM Clients WHERE id=${category.id}`
         const [data] = await connection.query(sql)
         await connection.end()
         res.status(SUCCESS_STATUS).json(new ResponseDTO("Donnée supprimée", data, SUCCESS_STATUS))
