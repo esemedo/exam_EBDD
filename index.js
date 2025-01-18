@@ -12,6 +12,7 @@ app.use("/api/products", require("./routes/products"))
 app.use("/api/categories", require("./routes/categories"))
 app.use("/api/providers", require("./routes/providers"))
 app.use("/api/orders", require("./routes/orders"))
+app.use("/api/clients", require("./routes/clients"))
 app.listen(3001, ()=>{
     console.log("Listen on port 3001");
     }

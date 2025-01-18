@@ -153,8 +153,6 @@ exports.putOrders = async (req, res, next) =>{
         await connection.end()
         res.status(SUCCESS_STATUS).json(new ResponseDTO("Données mis à jour.", response, SUCCESS_STATUS))
     } catch (error) {
-        console.log(error);
-        
         res.status(NETWORK_ERROR_STATUS).json(new ErrorResponseDTO("Problème serveur.", error, NETWORK_ERROR_STATUS))
     }
 }
