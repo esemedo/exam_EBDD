@@ -15,11 +15,11 @@ paths:
               properties:
                 category:
                   type: string
-                nameProduct:
+                name_product:
                   type: string
                 provider:
                   type: string
-                referenceProduct:
+                references_product:
                   type: string
                 stock:
                   type: integer
@@ -31,16 +31,21 @@ paths:
     put:
       summary: Update an existing product
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               type: object
               properties:
-                references_product:
+                category:
+                  type: string
+                name_product:
                   type: string
                 provider:
                   type: string
+                references_product:
+                  type: string
+                stock:
+                  type: integer
                 price:
                   type: number
       responses:
@@ -54,7 +59,7 @@ paths:
     delete:
       summary: Delete a product by its reference
       parameters:
-        - name: referenceProduct
+        - name: references_product
           in: path
           required: true
           schema:
