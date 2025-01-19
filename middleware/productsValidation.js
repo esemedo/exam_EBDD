@@ -51,6 +51,23 @@ exports.getProductsValidation = async (req,res,next) => {
     }
 };
 
+const productValidationGETNotif = z.object({
+    limit: z
+    .string()
+    .regex(/^\d+$/, "Le paramètre 'limit' doit être un nombre.")
+    .transform(Number) ,
+});
+
+
+exports.getNotifProductsValidation = async (req,res,next) => {
+    try {
+        await checkValidation(productValidationGETNotif, req.query)
+        next()
+    } catch (error) {
+        return res.status(BADREQUEST_STATUS).json(new ErrorResponseDTO(error.message, error.cause, BADREQUEST_STATUS))
+    }
+};
+
 const productValidationPUT = z.object({
     category: stringValidator(50).optional(),
     provider: stringValidator(50).optional(),
