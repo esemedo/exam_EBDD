@@ -1,11 +1,13 @@
 const express = require("express")
-const { getClients, postClients, putClients, deleteClients } = require("../controller/clientsController")
+const { getClients, postClients, putClients, deleteClients, getClientsOrders } = require("../controller/clientsController")
+const { postClientsValidation, putClientsValidation, deleteClientsValidation, getClientsValidation } = require("../middleware/clientsValidation")
 const router = express.Router()
 
 router.get('/', getClients )
-router.post('/', postClients)
-router.put('/', putClients)
-router.delete('/:email', deleteClients)
+router.get('/:email/orders', getClientsValidation, getClientsOrders )
+router.post('/', postClientsValidation, postClients)
+router.put('/', putClientsValidation, putClients)
+router.delete('/:email', deleteClientsValidation, deleteClients)
 
 
 module.exports = router
