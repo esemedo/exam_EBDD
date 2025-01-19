@@ -53,9 +53,59 @@ paths:
           description: Product updated successfully
     get:
       summary: Retrieve all products
+      parameters:
+        - name: product
+          in: query
+          required: false
+          description: Le nom du produit.
+          schema:
+            type: string
+        - name: references
+          in: query
+          required: false
+          description: La référence du produit.
+          schema:
+            type: string
+        - name: priceStart
+          in: query
+          required: false
+          description: Le prix de début du produit.
+          schema:
+            type: string
+        - name: priceEnd
+          in: query
+          required: false
+          description: Le prix de fin du produit.
+          schema:
+            type: string
+        - name: category
+          in: query
+          required: false
+          description: La catégorie du produit.
+          schema:
+            type: string
       responses:
         '200':
           description: Products retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    category:
+                      type: string
+                    name_product:
+                      type: string
+                    provider:
+                      type: string
+                    references_product:
+                      type: string
+                    stock:
+                      type: integer
+                    price:
+                      type: number
     delete:
       summary: Delete a product by its reference
       parameters:
@@ -78,6 +128,7 @@ paths:
           description: La référence du produit.
           schema:
             type: string
+            
       responses:
         '200':
           description: Liste des commandes qui contient le produit.
@@ -100,6 +151,46 @@ paths:
                       format: date-time
                       description: La date de la commande.
                     
+        '400':
+          description: Mauvaise requête (ex. référence non valide).
+        '404':
+          description: Client ou commandes non trouvées.
+        '500':
+          description: Erreur serveur interne.
+  /api/products/stock-low:
+    get:
+      summary: Récupérer les produits au stock faible
+      description: Obtenir tous les produits ayant un stock faible.
+      parameters:
+        - name: limit
+          in: query
+          required: true
+          description: Le seuil.
+          schema:
+            type: string
+            format: number
+      responses:
+        '200':
+          description: Liste des produits ayant un stock inférieur à seuil.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    category:
+                      type: string
+                    name_product:
+                      type: string
+                    provider:
+                      type: string
+                    references_product:
+                      type: string
+                    stock:
+                      type: integer
+                    price:
+                      type: number
         '400':
           description: Mauvaise requête (ex. référence non valide).
         '404':
@@ -139,9 +230,25 @@ paths:
           description: Category updated successfully
     get:
       summary: Retrieve all categories
+      parameters:
+        - name: category
+          in: query
+          required: false
+          description: Le nom de la catégorie.
+          schema:
+            type: string
       responses:
         '200':
           description: Categories retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    category:
+                      type: string
     delete:
       summary: Delete a category by its name
       parameters:
@@ -187,9 +294,29 @@ paths:
           description: Provider updated successfully
     get:
       summary: Retrieve all providers
+      parameters:
+        - name: provider
+          in: query
+          required: false
+          description: Le nom du fournisseur.
+          schema:
+            type: string
       responses:
         '200':
           description: Providers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name_provider:
+                      type: string
+                    product: 
+                      type : array
+                      items: 
+                        type: string                
     delete:
       summary: Delete a provider by its name
       parameters:
@@ -323,9 +450,59 @@ paths:
           description: Client updated successfully
     get:
       summary: Retrieve all clients
+      parameters:
+        - name: firstname
+          in: query
+          required: false
+          description: Le prénom du client.
+          schema:
+            type: string
+        - name: lastname
+          in: query
+          required: false
+          description: Le nom du client.
+          schema:
+            type: string
+        - name: email
+          in: query
+          required: false
+          description: L'email du client.
+          schema:
+            type: string
+            format: email
+        - name: address
+          in: query
+          required: false
+          description: L'adresse du client.
+          schema:
+            type: string
       responses:
         '200':
           description: Clients retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  email:
+                    type: string
+                  firstname:
+                    type: string
+                  lastname:
+                    type: string
+                  address:
+                    type: string
+                  orders:
+                    type: array
+                    items: 
+                      type: object
+                      properties:
+                        number_order: 
+                          type: string
+                        date_order: 
+                          type: string
+                        total_price: 
+                          type: string
     delete:
       summary: Delete a client by their email
       parameters:

@@ -4,6 +4,7 @@ const { BADREQUEST_STATUS } = require("../constants/constants");
 const ErrorResponseDTO = require("../dto/ErrorReponseDTO");
 const { checkValidation } = require("../utils/checkValidation");
 
+//POST
 const categoryValidationPOST = z.object({
     name_category: stringValidator(50),
 });
@@ -17,6 +18,7 @@ exports.postCategoriesValidation = async (req,res,next) => {
     }
 };
 
+//DELETE
 
 const categoryValidationDELETE = z.object({
     name_category: stringValidator(50),
@@ -31,6 +33,26 @@ exports.deleteCategoriesValidation = async (req,res,next) => {
         return res.status(BADREQUEST_STATUS).json(new ErrorResponseDTO(error.message, error.cause, BADREQUEST_STATUS))
     }
 };
+
+
+//GET
+
+const categoryValidationGET = z.object({
+    category: stringValidator(50).optional(),
+  });
+
+
+exports.getCategoriesValidation = async (req,res,next) => {
+    try {
+        await checkValidation(categoryValidationGET, req.query)
+        next()
+    } catch (error) {
+        return res.status(BADREQUEST_STATUS).json(new ErrorResponseDTO(error.message, error.cause, BADREQUEST_STATUS))
+    }
+};
+
+
+//PUT
 
 const categoryValidationPUT = z.object({
     name_category: stringValidator(50),

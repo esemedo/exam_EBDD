@@ -5,9 +5,17 @@ const { getConnectionDb } = require("../utils/db")
 
 exports.getCategories= async (req, res, next) =>{
     try {
+        let sqlQuery = ""
+        const tabSql = []
         const connection = await getConnectionDb()
-        const sql = `SELECT * FROM Categories ORDER BY id`
-        const [data] = await connection.execute(sql)
+        const {category}= req.query
+        if(category){
+            sqlQuery += " WHERE name_category LIKE ?"
+            tabSql.push(`%${category}%`); 
+        }
+        let sql = `SELECT name_category AS category FROM Categories `
+        sql +=sqlQuery + " ORDER BY id"
+        const [data] = await connection.execute(sql, tabSql)
         await connection.end()
         res.status(SUCCESS_STATUS).json(new ResponseDTO("Données récupérées", data, SUCCESS_STATUS))
     } catch (error) {

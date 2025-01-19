@@ -51,6 +51,33 @@ exports.getProductsValidation = async (req,res,next) => {
     }
 };
 
+
+const productValidationGETFirst = z.object({
+    priceStart: z
+    .string()
+    .regex(/^\d+$/, "Le paramètre 'priceStart' doit être un nombre.")
+    .transform(Number).optional() ,
+    priceEnd: z
+    .string()
+    .regex(/^\d+$/, "Le paramètre 'priceEnd' doit être un nombre.")
+    .transform(Number).optional() ,
+    category: stringValidator(50).optional(),
+    references: stringValidator(10).optional(),
+    product: stringValidator(50).optional()
+});
+
+
+exports.getFirstfProductsValidation = async (req,res,next) => {
+    try {
+        await checkValidation(productValidationGETFirst, req.query)
+        next()
+    } catch (error) {
+        return res.status(BADREQUEST_STATUS).json(new ErrorResponseDTO(error.message, error.cause, BADREQUEST_STATUS))
+    }
+};
+
+
+
 const productValidationGETNotif = z.object({
     limit: z
     .string()

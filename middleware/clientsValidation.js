@@ -69,3 +69,21 @@ exports.putClientsValidation = async (req,res,next) => {
         return res.status(BADREQUEST_STATUS).json(new ErrorResponseDTO(error.message, error.cause, BADREQUEST_STATUS))
     }
 };
+
+
+const getClientValidationGETQuery = z.object({
+    email: emailValidator(50).optional(),
+    firstname: stringValidator(50).optional(),
+    lastname: stringValidator(50).optional(),
+    address: stringValidator(50).optional(),
+});
+
+
+exports.getClientsValidationQuery = async (req,res,next) => {
+    try {
+        await checkValidation(getClientValidationGETQuery, req.query)
+        next()
+    } catch (error) {
+        return res.status(BADREQUEST_STATUS).json(new ErrorResponseDTO(error.message, error.cause, BADREQUEST_STATUS))
+    }
+};

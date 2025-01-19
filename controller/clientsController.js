@@ -5,9 +5,31 @@ const { getConnectionDb } = require("../utils/db")
 
 exports.getClients= async (req, res, next) =>{
     try {
+        const {firstname, lastname, email, address} = req.query
+        let sqlQuery = ""
+        const tabSql = []
         const connection = await getConnectionDb()
-        const sql = `SELECT c.firstname , c.lastname, c.email, c.address, o.number_order, o.date_order, o.total_price FROM Clients c LEFT JOIN orders o ON  o.id_client = c.id ORDER BY c.id`
-        const [data] = await connection.execute(sql)
+        if(firstname){
+            sqlQuery += " WHERE c.firstname LIKE ?"
+            tabSql.push(`%${firstname}%`); 
+        }
+        if(lastname){
+            sqlQuery += `${sqlQuery.length >0? " AND ": " WHERE "}c.lastname LIKE ?`
+            tabSql.push(`%${lastname}%`); 
+        }
+        if(email){
+            sqlQuery += `${sqlQuery.length >0? " AND ": " WHERE "}c.email LIKE ?`
+            tabSql.push(`%${email}%`)
+        }
+        if(address){
+            sqlQuery += `${sqlQuery.length >0? " AND ": " WHERE "}c.address LIKE ?`
+            tabSql.push(`%${address}%`); 
+        }
+        
+        let sql = `SELECT c.firstname , c.lastname, c.email, c.address, o.number_order, o.date_order, o.total_price FROM Clients c LEFT JOIN orders o ON  o.id_client = c.id`
+        sql += sqlQuery
+        
+        const [data] = await connection.execute(sql, tabSql)
         const groupedData = Object.values(
             data.reduce((acc, item) => {
               const clientKey = item.email; 
