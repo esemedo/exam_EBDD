@@ -5,8 +5,15 @@ const { getConnectionDb } = require("../utils/db")
 
 exports.getProviders= async (req, res, next) =>{
     try {
+        let sqlQuery = ""
+        const tabSql = []
         const connection = await getConnectionDb()
-        const sql = `WITH all_keys AS (
+        const {provider}= req.query
+        if(provider){
+            sqlQuery += " WHERE name_provider LIKE ?"
+            tabSql.push(`%${provider}%`); 
+        }
+        let sql = `WITH all_keys AS (
                 SELECT id FROM Providers
                 UNION
                 SELECT id_provider AS id FROM Providers_Products
@@ -17,8 +24,9 @@ exports.getProviders= async (req, res, next) =>{
             FROM all_keys keyss
             LEFT JOIN Providers pro ON keyss.id = pro.id
             LEFT JOIN Providers_Products pro_p ON keyss.id = pro_p.id_provider
-            LEFT JOIN Products p ON p.id = pro_p.id_product;`
-        const [data] = await connection.execute(sql)
+            LEFT JOIN Products p ON p.id = pro_p.id_product`
+        sql +=sqlQuery 
+        const [data] = await connection.execute(sql, tabSql)
         const groupedData = Object.values(
             data.reduce((acc, item) => {
               const providerKey = item.provider; 

@@ -5,8 +5,10 @@ const { getConnectionDb } = require("../utils/db")
 
 exports.getProducts = async (req, res, next) =>{
     try {
-        const connection = await getConnectionDb()
-        const sql = `WITH all_keys AS (
+        const {product, references, priceStart, priceEnd, category} = req.query
+        let sqlQuery = ""
+        const tabSql = []
+        let sql = `WITH all_keys AS (
             SELECT id FROM Products
             UNION
             SELECT id_product AS id FROM Providers_Products
@@ -19,8 +21,31 @@ exports.getProducts = async (req, res, next) =>{
         LEFT JOIN Products p ON p.id = keyss.id
         LEFT JOIN Categories c ON c.id = p.id_category 
         LEFT JOIN Providers_Products pro_p ON keyss.id = pro_p.id_product
-        LEFT JOIN Providers pro ON pro_p.id_provider = pro.id;`
-        const [data] = await connection.execute(sql)
+        LEFT JOIN Providers pro ON pro_p.id_provider = pro.id `
+        const connection = await getConnectionDb()
+        if(product){
+            sqlQuery += " WHERE p.name_product LIKE ?"
+            tabSql.push(`%${product}%`); 
+        }
+        if(references){
+            sqlQuery += `${sqlQuery.length >0? " AND ": " WHERE "}p.references_product LIKE ?`
+            tabSql.push(`%${references}%`); 
+        }
+        if(priceStart){
+            sqlQuery += `${sqlQuery.length >0? " AND ": " WHERE "}p.price >= ?`
+            tabSql.push(priceStart)
+        }
+        if(priceEnd){
+            sqlQuery += `${sqlQuery.length >0? " AND ": " WHERE "}p.price <= ?`
+            tabSql.push(priceEnd)
+        }
+        if(category){
+            sqlQuery += `${sqlQuery.length >0? " AND ": " WHERE "}c.name_category LIKE ?`
+            tabSql.push(`%${category}%`); 
+        }
+        
+        sql += sqlQuery
+        const [data] = await connection.execute(sql, tabSql)
         const groupedData = Object.values(
             data.reduce((acc, item) => {
               const productKey = item.product; 
@@ -168,5 +193,37 @@ exports.getProductsOrders = async (req, res, next) =>{
         res.status(SUCCESS_STATUS).json(new ResponseDTO("Données récupérées", data, SUCCESS_STATUS))
     } catch (error) {
         res.status(NETWORK_ERROR_STATUS).json(new ErrorResponseDTO("Problème serveur.",error, NETWORK_ERROR_STATUS))
+    }
+}
+
+exports.getNotifStockLow = async(req,res,next)=>{
+    try {
+        const {limit} = req.query
+        let seuil = 5
+        if(limit){
+            seuil = limit
+        }
+        const connection = await getConnectionDb()
+        const sql = `WITH all_keys AS (
+            SELECT id FROM Products
+            UNION
+            SELECT id_product AS id FROM Providers_Products
+        )
+
+        SELECT
+            pro.name_provider AS provider,
+            p.name_product AS product, p.references_product, p.stock, p.price, c.name_category AS category 
+        FROM all_keys keyss
+        LEFT JOIN Products p ON p.id = keyss.id
+        LEFT JOIN Categories c ON c.id = p.id_category 
+        LEFT JOIN Providers_Products pro_p ON keyss.id = pro_p.id_product
+        LEFT JOIN Providers pro ON pro_p.id_provider = pro.id
+        WHERE p.stock <= ?`
+        const [data] = await connection.execute(sql, [seuil])
+        await connection.end()
+        res.status(SUCCESS_STATUS).json(new ResponseDTO("Données récupérées", data, SUCCESS_STATUS))
+    } catch (error) {
+        res.status(NETWORK_ERROR_STATUS).json(new ErrorResponseDTO("Problème serveur.",error, NETWORK_ERROR_STATUS))
+        
     }
 }
