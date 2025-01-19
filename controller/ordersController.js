@@ -37,8 +37,6 @@ const updateProductOfOrders = async (productBody, connection,res, isPut = false,
     const mergedProducts=await Promise.all(productsInfo.map(async (item) => {
         const match = productBody.find((product) => product.name === item.references_product);
         let stock = item.stock;
-        console.log(match);
-        
         if (isPut) {
             const oldMatch = oldProducts.find((product) => product.id_product === item.id);
             if (oldMatch) {
