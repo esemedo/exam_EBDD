@@ -67,7 +67,45 @@ paths:
       responses:
         '204':
           description: Product deleted successfully
-
+  /api/products/{references_product}/orders:
+    get:
+      summary: Récupérer les commandes qui contient un produit précis
+      description: Obtenir toutes les commandes qui contient un produit précis.
+      parameters:
+        - name: references_product
+          in: path
+          required: true
+          description: La référence du produit.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Liste des commandes qui contient le produit.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    number_order:
+                      type: integer
+                      description: L'ID de la commande.
+                    total_price:
+                      type: number
+                      format: float
+                      description: Le prix total de la commande.
+                    date_order:
+                      type: string
+                      format: date-time
+                      description: La date de la commande.
+                    
+        '400':
+          description: Mauvaise requête (ex. référence non valide).
+        '404':
+          description: Client ou commandes non trouvées.
+        '500':
+          description: Erreur serveur interne.
   /api/categories:
     post:
       summary: Create a new category
@@ -213,6 +251,21 @@ paths:
           description: Order updated successfully
     get:
       summary: Retrieve all orders
+      parameters:
+        - name: start
+          in: query
+          required: false
+          description: La date de début.
+          schema:
+            type: string
+            format: date
+        - name: end
+          in: query
+          required: false
+          description: La date de fin.
+          schema:
+            type: string
+            format: date
       responses:
         '200':
           description: Orders retrieved successfully
@@ -284,7 +337,46 @@ paths:
       responses:
         '204':
           description: Client deleted successfully
-
+  /api/clients/{email}/orders:
+    get:
+      summary: Récupérer les commandes d'un client
+      description: Obtenir toutes les commandes associées à un client en utilisant son adresse email.
+      parameters:
+        - name: email
+          in: path
+          required: true
+          description: L'adresse email du client.
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: Liste des commandes du client.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    number_order:
+                      type: integer
+                      description: L'ID de la commande.
+                    total_price:
+                      type: number
+                      format: float
+                      description: Le prix total de la commande.
+                    date_order:
+                      type: string
+                      format: date-time
+                      description: La date de la commande.
+                    
+        '400':
+          description: Mauvaise requête (ex. email non valide).
+        '404':
+          description: Client ou commandes non trouvées.
+        '500':
+          description: Erreur serveur interne.
 components: {
   securitySchemes: {
     ApiKeyAuth: {
