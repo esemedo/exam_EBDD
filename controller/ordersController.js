@@ -3,30 +3,70 @@ const ErrorResponseDTO = require("../dto/ErrorReponseDTO")
 const ResponseDTO = require("../dto/ResponseDTO")
 const { getConnectionDb } = require("../utils/db")
 
-const updateProductOfOrders = async (productBody, connection)=>{
+const updateProductOfOrders = async (productBody, connection,res, isPut = false, oldProducts = [])=>{
     let productsWhereString = ""
     let productsWhereTab = []
+
+    const stockUpdates = [];
+
     productBody.map((product)=>{
         productsWhereString += `${productsWhereString.length >0? " OR ": ""}references_product=?`
         productsWhereTab.push(product.name)
     })
-    const sqlGetProductsId = `SELECT id,references_product, price FROM Products WHERE ${productsWhereString}`
+    const sqlGetProductsId = `SELECT id,references_product, name_product ,price, stock FROM Products WHERE ${productsWhereString}`
     const [productsInfo] = await connection.execute(sqlGetProductsId, productsWhereTab)
     if(productBody.length !== productsInfo.length){
         return res.status(BADREQUEST_STATUS).json(new ErrorResponseDTO("La liste de produits est incorrecte !", {}, BADREQUEST_STATUS))
     }
+    
+    const removedProducts = oldProducts.filter(
+        (oldProduct) => !productsInfo.some((newProduct) => newProduct.id === oldProduct.id_product)
+    );
+
+    await Promise.all(
+        removedProducts.map(async (removedProduct) => {
+            const sqlGetProduct = `SELECT stock FROM Products WHERE id=?`;
+            const [[productInfo]] = await connection.execute(sqlGetProduct, [removedProduct.id_product]);
+
+            const newStock = productInfo.stock + removedProduct.quantity;
+            stockUpdates.push({ id: removedProduct.id_product, newStock });
+        })
+    );
+
     let total_price = 0
+    const mergedProducts=await Promise.all(productsInfo.map(async (item) => {
+        const match = productBody.find((product) => product.name === item.references_product);
+        let stock = item.stock;
+        console.log(match);
+        
+        if (isPut) {
+            const oldMatch = oldProducts.find((product) => product.id_product === item.id);
+            if (oldMatch) {
+                stock += oldMatch.quantity; 
+            }
+        }
+        if (!match) {
+            throw new Error(`Produit non trouvé : ${item.name_product} (${item.references_product}).`, {
+                cause: { status: BADREQUEST_STATUS },
+            });
+        }
+        const newStock = stock - match.quantity;
 
-    const mergedProducts= productsInfo.map(item => {
-        const match = productBody.find(product => product.name === item.references_product);
-        total_price += item.price * match.quantity
+        if (newStock < 0) {
+            throw new Error(
+                `La quantité demandée pour le produit ${item.name_product} (${item.references_product}) dépasse le stock disponible.`,
+                { cause: { status: BADREQUEST_STATUS } }
+            );
+        }
+        stockUpdates.push({ id: item.id, newStock });
+        total_price += item.price * match.quantity;
         return {
-          ...item, 
-          quantity: match ? match.quantity : 1
+            ...item,
+            quantity: match.quantity,
         };
-      });
-
-    return {mergedProducts, total_price}
+      }));
+        return {mergedProducts, total_price , stockUpdates}
+    
 }
 
 
@@ -87,29 +127,39 @@ exports.postOrders = async (req, res, next) =>{
         if(!client){
             return res.status(NOTFOUND_STATUS).json(new ErrorResponseDTO("Le client n'existe pas !", {}, NOTFOUND_STATUS))
         }
-        const {mergedProducts, total_price}= await updateProductOfOrders(products, connection)
-        const sqlGetnbOrders = `SELECT * FROM Orders ORDER BY ID DESC LIMIT 1`
-        const [[last_order]] = await connection.execute(sqlGetnbOrders)
-        if(!last_order.number_order){
-            nb_order = "0000000001"
-        }else{
-            let parsedString = parseInt(last_order.number_order) + 1
-            nb_order = parsedString.toString().padStart(10, "0")
+        try {
+            const {mergedProducts, total_price, stockUpdates}= await updateProductOfOrders(products, connection,res)
+            const sqlGetnbOrders = `SELECT * FROM Orders ORDER BY ID DESC LIMIT 1`
+            const [[last_order]] = await connection.execute(sqlGetnbOrders)
+            if(!last_order.number_order){
+                nb_order = "0000000001"
+            }else{
+                let parsedString = parseInt(last_order.number_order) + 1
+                nb_order = parsedString.toString().padStart(10, "0")
+            }
+            
+            const sqlOrders = `INSERT INTO Orders (number_order, total_price, id_client) VALUES (?,?,?)`
+            const [data] = await connection.execute(sqlOrders, [nb_order,total_price,client.id])
+            
+            const result = await Promise.all(mergedProducts.map(async (product)=>{
+                const sqlOrdersProviders = `INSERT INTO Orders_Products (id_order, id_product, quantity) VALUES ( ?, ?, ?)`
+                const [insertRelation] = await connection.execute(sqlOrdersProviders, [data.insertId, product.id, product.quantity])
+                return insertRelation
+                })
+            )
+            await Promise.all(
+                stockUpdates.map(async ({ id, newStock }) => {
+                    const sqlUpdateProduct = `UPDATE Products SET stock=? WHERE id=?`;
+                    await connection.execute(sqlUpdateProduct, [newStock, id]);
+                })
+            );
+            const response = {orders_products : result, orders:data}
+            await connection.commit();
+            await connection.end()
+            res.status(SUCCESS_STATUS).json(new ResponseDTO("Donnée insérée",response , SUCCESS_STATUS))
+        }  catch (error) {
+            return res.status(NOTFOUND_STATUS).json(new ErrorResponseDTO(error.message, error, NOTFOUND_STATUS))
         }
-        
-        const sqlOrders = `INSERT INTO Orders (number_order, total_price, id_client) VALUES (?,?,?)`
-        const [data] = await connection.execute(sqlOrders, [nb_order,total_price,client.id])
-        
-        const result = await Promise.all(mergedProducts.map(async (product)=>{
-            const sqlOrdersProviders = `INSERT INTO Orders_Products (id_order, id_product, quantity) VALUES ( ?, ?, ?)`
-            const [insertRelation] = await connection.execute(sqlOrdersProviders, [data.insertId, product.id, product.quantity])
-            return insertRelation
-            })
-        )
-        const response = {orders_products : result, orders:data}
-        await connection.commit();
-        await connection.end()
-        res.status(SUCCESS_STATUS).json(new ResponseDTO("Donnée insérée",response , SUCCESS_STATUS))
     } catch (error) {
         res.status(NETWORK_ERROR_STATUS).json(new ErrorResponseDTO("Problème serveur.",error, NETWORK_ERROR_STATUS))
     }
@@ -125,24 +175,38 @@ exports.putOrders = async (req, res, next) =>{
         if(!orderInfo) {
             return res.status(NOTFOUND_STATUS).json(new ResponseDTO("La commande n'existe pas.", {}, NOTFOUND_STATUS))
         }
-        const sqlProductsProvidersSELECT = `DELETE FROM Orders_Products WHERE id_order=?`
-        await connection.execute(sqlProductsProvidersSELECT, [orderInfo.id])
-        const {mergedProducts, total_price}= await updateProductOfOrders(products, connection)
+        const sqlProductsOrderSelect = `SELECT quantity, id_product FROM Orders_Products WHERE id_order=?`
+        const [quantityOldProducts] =  await connection.execute(sqlProductsOrderSelect, [orderInfo.id])
+            
+        const sqlProductsOrdersDELETE = `DELETE FROM Orders_Products WHERE id_order=?`
+        await connection.execute(sqlProductsOrdersDELETE, [orderInfo.id])
 
-        const result = await Promise.all(mergedProducts.map(async (product)=>{
-            const sqlOrdersProviders = `INSERT INTO Orders_Products (id_order, id_product, quantity) VALUES (?, ?, ?)`
-            const [insertRelation] = await connection.execute(sqlOrdersProviders, [orderInfo.id, product.id, product.quantity])
-            return insertRelation
-            })
-        )
-        const sqlOrders = `UPDATE Orders SET total_price=? WHERE id=?`
-        const [orderUpdated] = await connection.execute(sqlOrders, [total_price,orderInfo.id])
-        const response = {orders_products : result, orders:orderUpdated}
+        try {
+            const {mergedProducts, total_price, stockUpdates}= await updateProductOfOrders(products, connection,res, true, quantityOldProducts)
+            const result = await Promise.all(mergedProducts.map(async (product)=>{
+                const sqlOrdersProviders = `INSERT INTO Orders_Products (id_order, id_product, quantity) VALUES (?, ?, ?)`
+                const [insertRelation] = await connection.execute(sqlOrdersProviders, [orderInfo.id, product.id, product.quantity])
+                return insertRelation
+                })
+            )
+            const sqlOrders = `UPDATE Orders SET total_price=? WHERE id=?`
+            const [orderUpdated] = await connection.execute(sqlOrders, [total_price,orderInfo.id])
+            const response = {orders_products : result, orders:orderUpdated}
+            await Promise.all(
+                stockUpdates.map(async ({ id, newStock }) => {
+                    const sqlUpdateProduct = `UPDATE Products SET stock=? WHERE id=?`;
+                    await connection.execute(sqlUpdateProduct, [newStock, id]);
+                })
+            );
 
-        await connection.commit();
-        await connection.end()
-        res.status(SUCCESS_STATUS).json(new ResponseDTO("Données mis à jour.", response, SUCCESS_STATUS))
+            await connection.commit();
+            await connection.end()
+            res.status(SUCCESS_STATUS).json(new ResponseDTO("Données mis à jour.", response, SUCCESS_STATUS))
+        }  catch (error) {
+        return res.status(NOTFOUND_STATUS).json(new ErrorResponseDTO(error.message, error, NOTFOUND_STATUS))
+        }
     } catch (error) {
+        
         res.status(NETWORK_ERROR_STATUS).json(new ErrorResponseDTO("Problème serveur.", error, NETWORK_ERROR_STATUS))
     }
 }
