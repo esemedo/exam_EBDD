@@ -58,7 +58,7 @@ exports.postOrders = async (req, res, next) =>{
         const sqlClient = `SELECT id FROM Clients WHERE email= '${email}'`
         const [[client]] = await connection.query(sqlClient)
         if(!client){
-            return res.status(BADREQUEST_STATUS).json(new ErrorResponseDTO("Le client n'existe pas !", {}, BADREQUEST_STATUS))
+            return res.status(NOTFOUND_STATUS).json(new ErrorResponseDTO("Le client n'existe pas !", {}, NOTFOUND_STATUS))
         }
         let productsWhereString = ""
         products.map((product)=>{
@@ -115,7 +115,7 @@ exports.putOrders = async (req, res, next) =>{
         const sqlSelectOrders = `SELECT id FROM Orders WHERE number_order='${number_order}'`
         const [[orderInfo]] = await connection.query(sqlSelectOrders)
         if(!orderInfo) {
-            return res.status(BADREQUEST_STATUS).json(new ResponseDTO("La commande n'existe pas.", {}, BADREQUEST_STATUS))
+            return res.status(NOTFOUND_STATUS).json(new ResponseDTO("La commande n'existe pas.", {}, NOTFOUND_STATUS))
         }
         const sqlProductsProvidersSELECT = `DELETE FROM Orders_Products WHERE id_order=${orderInfo.id}`
         await connection.query(sqlProductsProvidersSELECT)

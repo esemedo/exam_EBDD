@@ -52,7 +52,7 @@ exports.postProducts = async (req, res, next) =>{
         const sqlCategory = `SELECT id FROM Categories WHERE name_category= '${body.category}'`
         const [[category]] = await connection.query(sqlCategory)
         if(!category){
-            return res.status(BADREQUEST_STATUS).json(new ErrorResponseDTO("La catégorie n'existe pas !", {}, BADREQUEST_STATUS))
+            return res.status(NOTFOUND_STATUS).json(new ErrorResponseDTO("La catégorie n'existe pas !", {}, NOTFOUND_STATUS))
         }
         if(!body.provider){
             return res.status(BADREQUEST_STATUS).json(new ErrorResponseDTO("Veuillez indiquer un fournisseur", {}, BADREQUEST_STATUS))
@@ -60,7 +60,7 @@ exports.postProducts = async (req, res, next) =>{
         const sqlProvider = `SELECT id FROM Providers WHERE name_provider= '${body.provider}'`
         const [[provider]] = await connection.query(sqlProvider)
         if(!provider){
-            return res.status(BADREQUEST_STATUS).json(new ErrorResponseDTO("Le fournisseur n'existe pas !", {}, BADREQUEST_STATUS))
+            return res.status(NOTFOUND_STATUS).json(new ErrorResponseDTO("Le fournisseur n'existe pas !", {}, NOTFOUND_STATUS))
         }
         const sqlProducts = `INSERT INTO Products (name_product, references_product, stock, price, id_category) VALUES ('${body.nameProduct}', '${body.referenceProduct}', ${body.stock}, ${body.price}, ${category.id})`
         const [data] = await connection.query(sqlProducts)
@@ -108,7 +108,7 @@ exports.putProducts = async (req, res, next) =>{
             const sqlProvider = `SELECT id FROM Providers WHERE name_provider= '${provider}'`
             const [[providerInfo]] = await connection.query(sqlProvider)
             if(!providerInfo){
-                return res.status(BADREQUEST_STATUS).json(new ErrorResponseDTO("Le fournisseur n'existe pas !", {}, BADREQUEST_STATUS))
+                return res.status(NOTFOUND_STATUS).json(new ErrorResponseDTO("Le fournisseur n'existe pas !", {}, NOTFOUND_STATUS))
             }
             const sqlProductsProvidersSELECT = `SELECT * FROM Providers_Products WHERE id_product=${productInfo.id} AND id_provider=${providerInfo.id}`
             const [[result]] = await connection.query(sqlProductsProvidersSELECT)
