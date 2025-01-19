@@ -284,3 +284,18 @@ paths:
       responses:
         '204':
           description: Client deleted successfully
+
+components: {
+  securitySchemes: {
+    ApiKeyAuth: {
+      type: 'apiKey',
+      in: 'header',
+      name: 'x-api-key', 
+    },
+  },
+}
+security: [
+      {
+          ApiKeyAuth: [], 
+      },
+  ]
