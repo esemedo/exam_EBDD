@@ -37,6 +37,20 @@ exports.deleteProductsValidation = async (req,res,next) => {
     }
 };
 
+const productValidationGET = z.object({
+    references_product: stringValidator(10),
+});
+
+
+exports.getProductsValidation = async (req,res,next) => {
+    try {
+        await checkValidation(productValidationGET, req.params)
+        next()
+    } catch (error) {
+        return res.status(BADREQUEST_STATUS).json(new ErrorResponseDTO(error.message, error.cause, BADREQUEST_STATUS))
+    }
+};
+
 const productValidationPUT = z.object({
     category: stringValidator(50).optional(),
     provider: stringValidator(50).optional(),

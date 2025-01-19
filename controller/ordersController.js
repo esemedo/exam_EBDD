@@ -70,8 +70,11 @@ const updateProductOfOrders = async (productBody, connection,res, isPut = false,
 
 exports.getOrders = async (req, res, next) =>{
     try {
+        const {start, end} = req.query
+        const tabSql = []
         const connection = await getConnectionDb()
-        const sql = `WITH all_keys AS (
+        let querySql = ""
+        let sql = `WITH all_keys AS (
             SELECT id FROM Orders
             UNION
             SELECT id_product AS id FROM Orders_Products
@@ -85,8 +88,19 @@ exports.getOrders = async (req, res, next) =>{
         LEFT JOIN Orders o ON o.id = k.id
         LEFT JOIN Clients c ON c.id = o.id_client
         LEFT JOIN Orders_Products op ON k.id = op.id_order
-        LEFT JOIN Products p ON op.id_product = p.id;`
-        const [data] = await connection.execute(sql)
+        LEFT JOIN Products p ON op.id_product = p.id`
+
+        if(start){
+            querySql += " WHERE o.date_order >= ?"
+            tabSql.push(start)
+        }
+        if(end){
+            querySql += `${querySql.length >0? " AND ": " WHERE "}o.date_order <=?`
+            tabSql.push(`${end}T23:59:59.000Z`)
+        }
+        sql+=querySql
+
+        const [data] = await connection.execute(sql, tabSql)
         const groupedData = Object.values(
             data.reduce((acc, item) => {
               const orderKey = item.number_order; 

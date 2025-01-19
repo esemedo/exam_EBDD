@@ -35,6 +35,21 @@ exports.deleteClientsValidation = async (req,res,next) => {
     }
 };
 
+const clientValidationGET = z.object({
+    email: emailValidator(50),
+  });
+
+
+exports.getClientsValidation = async (req,res,next) => {
+    try {
+        await checkValidation(clientValidationGET, req.params)
+        next()
+    } catch (error) {
+        return res.status(BADREQUEST_STATUS).json(new ErrorResponseDTO(error.message, error.cause, BADREQUEST_STATUS))
+    }
+};
+
+
 const clientValidationPUT = z.object({
     email: emailValidator(50),
     firstname: stringValidator(50).optional(),

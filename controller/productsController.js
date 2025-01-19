@@ -149,3 +149,24 @@ exports.deleteProducts = async (req,res, next) => {
         res.status(NETWORK_ERROR_STATUS).json(new ErrorResponseDTO("Problème serveur.",error, NETWORK_ERROR_STATUS))
     }
 }
+
+
+exports.getProductsOrders = async (req, res, next) =>{
+    try {
+        const {references_product} = req.params
+        const connection = await getConnectionDb()
+        const sql = `
+        SELECT
+            o.number_order, o.date_order, o.total_price
+        FROM Products p 
+        LEFT JOIN Orders_Products op ON p.id = op.id_product
+        LEFT JOIN Orders o ON op.id_order = o.id
+        WHERE p.references_product = ?
+    `
+        const [data] = await connection.execute(sql,[references_product])
+        await connection.end()
+        res.status(SUCCESS_STATUS).json(new ResponseDTO("Données récupérées", data, SUCCESS_STATUS))
+    } catch (error) {
+        res.status(NETWORK_ERROR_STATUS).json(new ErrorResponseDTO("Problème serveur.",error, NETWORK_ERROR_STATUS))
+    }
+}

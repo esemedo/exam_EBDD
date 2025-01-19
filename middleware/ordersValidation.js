@@ -1,5 +1,5 @@
 const z = require("zod")
-const {stringValidator, emailValidator, arrayValidator, numberValidator} = require("../lib/validators");
+const {stringValidator, emailValidator, arrayValidator, numberValidator, dateValidator} = require("../lib/validators");
 const { BADREQUEST_STATUS } = require("../constants/constants");
 const ErrorResponseDTO = require("../dto/ErrorReponseDTO");
 const { checkValidation } = require("../utils/checkValidation");
@@ -12,6 +12,20 @@ const orderValidationPOST = z.object({
 exports.postOrdersValidation = async (req,res,next) => {
     try {
         await checkValidation(orderValidationPOST, req.body)
+        next()
+    } catch (error) {
+        return res.status(BADREQUEST_STATUS).json(new ErrorResponseDTO(error.message, error.cause, BADREQUEST_STATUS))
+    }
+};
+
+const orderValidationGET = z.object({
+    start: dateValidator.optional(),
+    end: dateValidator.optional(),
+});
+
+exports.getOrdersValidation = async (req,res,next) => {
+    try {
+        await checkValidation(orderValidationGET, req.query)
         next()
     } catch (error) {
         return res.status(BADREQUEST_STATUS).json(new ErrorResponseDTO(error.message, error.cause, BADREQUEST_STATUS))

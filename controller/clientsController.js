@@ -104,3 +104,17 @@ exports.deleteClients= async (req,res, next) => {
         res.status(NETWORK_ERROR_STATUS).json(new ErrorResponseDTO("Problème serveur.",error, NETWORK_ERROR_STATUS))
     }
 }
+
+
+exports.getClientsOrders = async (req, res, next) =>{
+    try {
+        const {email} = req.params
+        const connection = await getConnectionDb()
+        const sql = `SELECT o.number_order, o.date_order, o.total_price FROM Orders o LEFT JOIN Clients c ON o.id_client = c.id WHERE c.email=?`
+        const [data] = await connection.execute(sql, [email])
+        await connection.end()
+        res.status(SUCCESS_STATUS).json(new ResponseDTO("Données récupérées", data, SUCCESS_STATUS))
+    } catch (error) {
+        res.status(NETWORK_ERROR_STATUS).json(new ErrorResponseDTO("Problème serveur.",error, NETWORK_ERROR_STATUS))
+    }
+}
