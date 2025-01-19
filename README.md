@@ -26,6 +26,7 @@ npm i
 npm run dev
 ```
 - Le serveur est maintenant accessible via [Api](http://localhost:3001/)
+- La documentation de l'Api est disponible à (http://localhost:3001/api-docs)
 
 ## Failles de sécurité
 - Dans les routes PUT, POST et DELETE, il y a un risque d'injection SQL, c'est à dire que du code en langage SQL peut être envoyer afin d'altérer la base de donnée. Cela est dû au fait qu'un utilisateur puisse envoyer des données pour insérer, modifier, supprimer des informations mais qu'elles ne sont pas filtrés. Un utilisateur mal intentionné peut jouer de cette faille pour, par exemple, supprimer la base de données.
