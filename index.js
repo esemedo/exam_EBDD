@@ -22,6 +22,7 @@ app.use("/api/categories", checkApiKey, require("./routes/categories"))
 app.use("/api/providers",checkApiKey, require("./routes/providers"))
 app.use("/api/orders",checkApiKey, require("./routes/orders"))
 app.use("/api/clients", checkApiKey, require("./routes/clients"))
+app.use("/api/stats", checkApiKey, require("./routes/statistics"))
 app.listen(3001, ()=>{
     console.log("Listen on port 3001");
     }
